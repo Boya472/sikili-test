@@ -17,7 +17,7 @@ Application web Django qui synchronise automatiquement les clients et commandes 
 
 ```bash
 # 1. Cloner le repo
-git clone <url-du-repo>
+git clone <https://github.com/Boya472/sikili-test.git>
 cd sikili-test
 
 # 2. Copier le fichier d'environnement
