@@ -1,0 +1,529 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des clients — Sikili{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Reset base table styles inside .sk-page ── */
+  .sk-page table { border-collapse: collapse; }
+  .sk-page .sk-table thead th,
+  .sk-page .sk-sub-table thead th {
+    padding: 10px 16px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: none;
+    border-top: none;
+    background: #F8FAFC;
+  }
+  .sk-page .sk-table tbody td,
+  .sk-page .sk-sub-table tbody td {
+    padding: 13px 16px;
+    background: transparent;
+    border-bottom: none;
+    font-size: 0.875rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+  .sk-page .sk-table tbody tr:hover td { background: transparent; }
+
+  /* ── Shell ── */
+  .sk-page { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05); overflow: visible; }
+
+  /* ── Page header ── */
+  .sk-hd { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px 18px; border-bottom: 1px solid #F1F5F9; gap: 16px; flex-wrap: wrap; }
+  .sk-hd-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sk-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; }
+  .sk-count-badge { background: #F1F5F9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; }
+  .sk-hd-right { display: flex; gap: 8px; align-items: center; }
+  .sk-btn-sync { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #475569; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: background 0.15s; text-decoration: none; line-height: 1; }
+  .sk-btn-sync:hover { background: #F1F5F9; border-color: #CBD5E1; }
+  .sk-btn-new { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; background: #0f172a; color: #fff; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: background 0.15s; line-height: 1; }
+  .sk-btn-new:hover { background: #1e293b; }
+
+  /* ── Toolbar ── */
+  .sk-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid #F1F5F9; gap: 16px; flex-wrap: wrap; }
+  .sk-search-wrap { position: relative; min-width: 200px; max-width: 320px; flex: 1; }
+  .sk-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; display: flex; }
+  .sk-search { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.85rem; outline: none; color: #0f172a; background: #fff; transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit; }
+  .sk-search:focus { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+  .sk-clear-link { font-size: 0.8rem; color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; transition: color 0.15s; }
+  .sk-clear-link:hover { color: #475569; }
+  .sk-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .sk-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; text-decoration: none; border: 1px solid #E2E8F0; background: #F8FAFC; color: #64748b; transition: background 0.15s; white-space: nowrap; }
+  .sk-chip:hover { background: #F1F5F9; }
+  .sk-chip-n { font-size: 0.72rem; opacity: .75; }
+  .sk-chip-active { background: #14532d; color: #fff; border-color: #14532d; }
+  .sk-chip-active:hover { background: #166534; }
+
+  /* ── Results banner ── */
+  .sk-results { padding: 9px 28px; border-bottom: 1px solid #F1F5F9; font-size: 0.8rem; color: #64748b; }
+
+  /* ── Table ── */
+  .sk-table-wrap { overflow-x: auto; }
+  .sk-table { width: 100%; border-collapse: collapse; }
+  .sk-table thead tr { border-bottom: 2px solid #E2E8F0; }
+  .sk-table tbody .sk-row { border-bottom: 1px solid #F1F5F9; transition: background 0.1s; }
+  .sk-table tbody .sk-row:hover { background: #F9FAFB; }
+  .sk-table tbody .sk-row:last-child { border-bottom: none; }
+
+  /* Checkbox */
+  .sk-cb { width: 15px; height: 15px; cursor: pointer; accent-color: #22c55e; }
+
+  /* Avatar */
+  .sk-avatar { width: 33px; height: 33px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: #fff; flex-shrink: 0; letter-spacing: 0.02em; }
+
+  /* Chevron */
+  .sk-chev { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: #94a3b8; border-radius: 4px; transition: color 0.15s, background 0.15s; padding: 0; flex-shrink: 0; }
+  .sk-chev:hover { color: #475569; background: #F1F5F9; }
+  .sk-chev svg { transition: transform 0.2s; }
+  .sk-chev.open svg { transform: rotate(90deg); }
+  .sk-chev-placeholder { width: 22px; flex-shrink: 0; display: inline-block; }
+
+  /* Name cell */
+  .sk-name-cell { display: flex; align-items: center; gap: 9px; }
+  .sk-client-name { font-weight: 600; color: #111827; font-size: 0.875rem; line-height: 1.3; }
+  .sk-client-meta { font-size: 0.72rem; color: #94a3b8; margin-top: 1px; }
+
+  /* Status pills */
+  .sk-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+  .sk-pill-green { background: #E6F6EF; color: #0E8A5F; }
+  .sk-pill-orange { background: #FEF3C7; color: #92400E; }
+  .sk-pdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .sk-pill-green .sk-pdot { background: #0E8A5F; }
+  .sk-pill-orange .sk-pdot { background: #D97706; }
+  .sk-odoo-ref { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: 0.72rem; background: #F1F5F9; color: #475569; padding: 1px 6px; border-radius: 4px; margin-left: 5px; display: inline-block; }
+  .sk-sync-time { display: block; font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
+  .sk-resync { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(255,255,255,0.5); border: 1px solid #fcd34d; color: #92400E; text-decoration: none; font-size: 10px; transition: background 0.15s; margin-left: 3px; line-height: 1; }
+  .sk-resync:hover { background: rgba(255,255,255,0.9); }
+
+  /* Orders cell */
+  .sk-orders-n { font-weight: 600; color: #111827; font-size: 0.875rem; }
+  .sk-orders-t { font-size: 0.72rem; color: #94a3b8; margin-top: 1px; display: block; }
+
+  /* Action buttons */
+  .sk-actions { display: flex; align-items: center; gap: 6px; }
+  .sk-btn-voir { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 6px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #475569; font-size: 0.78rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: background 0.15s; white-space: nowrap; }
+  .sk-btn-voir:hover { background: #F1F5F9; border-color: #CBD5E1; }
+  .sk-kebab-wrap { position: relative; }
+  .sk-kebab { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #475569; cursor: pointer; font-size: 0.9rem; transition: background 0.15s; letter-spacing: 1.5px; line-height: 1; padding: 0; font-family: inherit; }
+  .sk-kebab:hover { background: #F1F5F9; border-color: #CBD5E1; }
+  .sk-drop { position: absolute; right: 0; top: calc(100% + 5px); background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.10); min-width: 168px; z-index: 200; display: none; overflow: hidden; }
+  .sk-drop.open { display: block; }
+  .sk-drop a { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.82rem; color: #374151; text-decoration: none; transition: background 0.1s; }
+  .sk-drop a:hover { background: #F8FAFC; }
+  .sk-drop-sep { border: none; border-top: 1px solid #F1F5F9; margin: 3px 0; }
+
+  /* Expanded row */
+  .sk-exp-row td { padding: 0 !important; background: transparent !important; border-bottom: 1px solid #E2E8F0 !important; }
+  .sk-exp-inner { background: #F8FAFC; padding: 14px 28px 18px; border-top: 1px solid #E2E8F0; }
+  .sk-exp-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+  .sk-exp-title { font-size: 0.8rem; font-weight: 600; color: #475569; }
+  .sk-btn-add { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px; background: #0f172a; color: #fff; font-size: 0.78rem; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+  .sk-btn-add:hover { background: #1e293b; }
+
+  /* Sub-table */
+  .sk-sub-wrap { border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0; }
+  .sk-sub-table { width: 100%; border-collapse: collapse; }
+  .sk-sub-table thead tr { border-bottom: 1px solid #E2E8F0; }
+  .sk-sub-table thead th { padding: 8px 14px !important; font-size: 10px !important; color: #94a3b8 !important; background: #fff !important; }
+  .sk-sub-table tbody td { padding: 9px 14px !important; font-size: 0.8rem !important; border-bottom: 1px solid #F1F5F9 !important; background: #fff !important; }
+  .sk-sub-table tbody tr:last-child td { border-bottom: none !important; }
+  .sk-prod-cell { display: flex; align-items: center; gap: 7px; }
+
+  /* Footer */
+  .sk-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; border-top: 1px solid #F1F5F9; flex-wrap: wrap; gap: 12px; }
+  .sk-foot-info { font-size: 0.78rem; color: #94a3b8; }
+  .sk-pager { display: flex; align-items: center; gap: 4px; }
+  .sk-pager a { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 6px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #475569; text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: background 0.15s; }
+  .sk-pager a:hover { background: #F1F5F9; }
+  .sk-pager a.active { background: #14532d; color: #fff; border-color: #14532d; font-weight: 600; }
+
+  /* Empty state */
+  .sk-empty { text-align: center; padding: 60px 24px; }
+</style>
+
+<div class="sk-page">
+
+  <!-- ── Page header ── -->
+  <div class="sk-hd">
+    <div class="sk-hd-left">
+      <h1 class="sk-title">Clients</h1>
+      <span class="sk-count-badge">{{ page_obj.paginator.count }}</span>
+    </div>
+    <div class="sk-hd-right">
+      <form method="post" action="{% url 'sync_tout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="sk-btn-sync">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Synchroniser tout
+        </button>
+      </form>
+      <a href="{% url 'creer_client' %}" class="sk-btn-new">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouveau client
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Toolbar: search + chips ── -->
+  <div class="sk-toolbar">
+    <form method="get" action="" style="display:flex; align-items:center; gap:10px; flex:1; flex-wrap:wrap;">
+      {% if filtre != 'tous' %}<input type="hidden" name="filtre" value="{{ filtre }}">{% endif %}
+      <div class="sk-search-wrap">
+        <span class="sk-search-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher un client..." class="sk-search">
+      </div>
+      {% if q %}
+      <a href="?{% if filtre != 'tous' %}filtre={{ filtre }}&{% endif %}" class="sk-clear-link">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Effacer
+      </a>
+      {% endif %}
+    </form>
+    <div class="sk-chips">
+      <a href="?{% if q %}q={{ q }}&{% endif %}filtre=tous"
+         class="sk-chip {% if filtre == 'tous' %}sk-chip-active{% endif %}">
+        Tous <span class="sk-chip-n">{{ count_total }}</span>
+      </a>
+      <a href="?{% if q %}q={{ q }}&{% endif %}filtre=sync"
+         class="sk-chip {% if filtre == 'sync' %}sk-chip-active{% endif %}">
+        Synchronisé <span class="sk-chip-n">{{ count_sync }}</span>
+      </a>
+      <a href="?{% if q %}q={{ q }}&{% endif %}filtre=non_sync"
+         class="sk-chip {% if filtre == 'non_sync' %}sk-chip-active{% endif %}">
+        Non synchronisé <span class="sk-chip-n">{{ count_non_sync }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Search results info ── -->
+  {% if q %}
+  <div class="sk-results">
+    <strong>{{ total }}</strong> résultat{% if total != 1 %}s{% endif %} pour <em>&laquo;{{ q }}&raquo;</em>
+  </div>
+  {% endif %}
+
+  <!-- ── Table ── -->
+  <div class="sk-table-wrap">
+    {% if clients %}
+    <table class="sk-table">
+      <thead>
+        <tr>
+          <th style="width:44px; padding-right:0;">
+            <input type="checkbox" class="sk-cb" id="sk-select-all" title="Tout sélectionner">
+          </th>
+          <th>Nom</th>
+          <th>Téléphone</th>
+          <th>Email</th>
+          <th>Statut Odoo</th>
+          <th>Commandes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+
+        <!-- Main row -->
+        <tr class="sk-row" id="sk-row-{{ forloop.counter }}">
+
+          <td style="padding-right:0;" onclick="event.stopPropagation()">
+            <input type="checkbox" class="sk-cb sk-row-cb" data-id="{{ client.id }}">
+          </td>
+
+          <td>
+            <div class="sk-name-cell">
+              {% if client.orders.exists %}
+              <button class="sk-chev" id="sk-chev-{{ forloop.counter }}"
+                      onclick="skToggle({{ forloop.counter }})" title="Voir les commandes">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              {% else %}
+              <span class="sk-chev-placeholder"></span>
+              {% endif %}
+              <div class="sk-avatar" data-name="{{ client.nom }}">{{ client.nom|slice:":2"|upper }}</div>
+              <div>
+                <div class="sk-client-name">{{ client.nom }}</div>
+                <div class="sk-client-meta">Client &middot; {{ client.orders.count }} commande{% if client.orders.count != 1 %}s{% endif %}</div>
+              </div>
+            </div>
+          </td>
+
+          <td><span class="sk-phone" data-raw="{{ client.telephone }}">{{ client.telephone }}</span></td>
+
+          <td style="color:#6b7280; font-size:0.82rem;">{{ client.email }}</td>
+
+          <td>
+            {% if client.odoo_partner_id and not client.has_unsynced_order %}
+              <span class="sk-pill sk-pill-green">
+                <span class="sk-pdot"></span>Synchronisé
+              </span>
+              <span class="sk-odoo-ref">#{{ client.odoo_partner_id }}</span>
+              {% if client.last_sync_at %}
+                <span class="sk-sync-time sk-reltime" data-ts="{{ client.last_sync_at.isoformat }}">…</span>
+              {% else %}
+                <span class="sk-sync-time">—</span>
+              {% endif %}
+            {% else %}
+              <span class="sk-pill sk-pill-orange">
+                <span class="sk-pdot"></span>Non synchronisé
+                {% if not client.odoo_partner_id %}
+                  <a href="{% url 'resync_client' client.id %}" class="sk-resync"
+                     onclick="event.stopPropagation()" title="Resynchroniser le partenaire">&#x1F504;</a>
+                {% endif %}
+              </span>
+              {% if client.odoo_partner_id %}
+                <a href="{% url 'resync_commandes_client' client.id %}"
+                   onclick="event.stopPropagation()"
+                   style="display:block; font-size:0.7rem; color:#92400E; margin-top:4px; text-decoration:none;"
+                   onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                  ↻ Synchroniser les commandes
+                </a>
+              {% else %}
+                <span class="sk-sync-time">Jamais</span>
+              {% endif %}
+            {% endif %}
+          </td>
+
+          <td>
+            <span class="sk-orders-n">{{ client.orders.count }}</span>
+            {% if client.total_commandes %}
+              <span class="sk-orders-t sk-amount" data-v="{{ client.total_commandes|floatformat:0 }}">{{ client.total_commandes|floatformat:0 }} XOF</span>
+            {% else %}
+              <span class="sk-orders-t">— XOF</span>
+            {% endif %}
+          </td>
+
+          <td onclick="event.stopPropagation()">
+            <div class="sk-actions">
+              <button class="sk-btn-voir" onclick="skToggle({{ forloop.counter }})" title="Voir les commandes">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Voir
+              </button>
+              <div class="sk-kebab-wrap">
+                <button class="sk-kebab" onclick="skKebab(this)" title="Plus d'actions">···</button>
+                <div class="sk-drop">
+                  <a href="{% url 'creer_commande_client' client.id %}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Ajouter une commande
+                  </a>
+                  {% if client.has_unsynced_order %}
+                  <hr class="sk-drop-sep">
+                  <a href="{% url 'resync_commandes_client' client.id %}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Synchroniser les commandes
+                  </a>
+                  {% endif %}
+                  {% if not client.odoo_partner_id %}
+                  <hr class="sk-drop-sep">
+                  <a href="{% url 'resync_client' client.id %}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Synchroniser le partenaire
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Expanded orders row -->
+        {% if client.orders.exists %}
+        <tr class="sk-exp-row" id="sk-exp-{{ forloop.counter }}" style="display:none;">
+          <td colspan="7">
+            <div class="sk-exp-inner">
+              <div class="sk-exp-hd">
+                <span class="sk-exp-title">
+                  Commandes de {{ client.nom }}
+                  &middot; {{ client.orders.count }} ligne{% if client.orders.count != 1 %}s{% endif %}
+                </span>
+                <a href="{% url 'creer_commande_client' client.id %}" class="sk-btn-add">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Ajouter une commande
+                </a>
+              </div>
+              <div class="sk-sub-wrap">
+                <table class="sk-sub-table">
+                  <thead>
+                    <tr>
+                      <th>Produit</th>
+                      <th>Qté</th>
+                      <th>Prix unit.</th>
+                      <th>Total</th>
+                      <th>Statut Odoo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for order in client.orders.all %}
+                    <tr>
+                      <td>
+                        <div class="sk-prod-cell">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                          <span style="font-weight:500; color:#111827;">{{ order.nom_produit }}</span>
+                        </div>
+                      </td>
+                      <td>{{ order.quantite }}</td>
+                      <td>{% widthratio order.prix_total order.quantite 1 %}&nbsp;XOF</td>
+                      <td style="font-weight:600;">{{ order.prix_total|floatformat:0 }}&nbsp;XOF</td>
+                      <td>
+                        {% if order.odoo_order_id %}
+                          <span class="sk-pill sk-pill-green" style="font-size:0.72rem; padding:2px 8px;">
+                            <span class="sk-pdot"></span>Sync.
+                            <span class="sk-odoo-ref" style="font-size:0.68rem;">#{{ order.odoo_order_id }}</span>
+                          </span>
+                        {% else %}
+                          <span class="sk-pill sk-pill-orange" style="font-size:0.72rem; padding:2px 8px;">
+                            <span class="sk-pdot"></span>Non sync.
+                          </span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+    <div class="sk-empty">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 14px">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      {% if q %}
+        <p style="color:#9ca3af; margin-bottom:14px; font-size:.88rem;">Aucun résultat pour &laquo;{{ q }}&raquo;.</p>
+        <a href="{% url 'liste_clients' %}" class="sk-btn-new">Voir tous les clients</a>
+      {% else %}
+        <p style="color:#9ca3af; margin-bottom:14px; font-size:.88rem;">Aucun client pour le moment.</p>
+        <a href="{% url 'creer_client' %}" class="sk-btn-new">Créer le premier client</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Table footer ── -->
+  {% if clients %}
+  <div class="sk-foot">
+    <span class="sk-foot-info">
+      Affichage {{ page_obj.start_index }}–{{ page_obj.end_index }}
+      sur {{ page_obj.paginator.count }} client{% if page_obj.paginator.count != 1 %}s{% endif %}
+    </span>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="sk-pager">
+      {% if page_obj.has_previous %}
+      <a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre != 'tous' %}filtre={{ filtre }}&{% endif %}page={{ page_obj.previous_page_number }}">‹</a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+      <a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre != 'tous' %}filtre={{ filtre }}&{% endif %}page={{ num }}"
+         class="{% if num == page_obj.number %}active{% endif %}">{{ num }}</a>
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre != 'tous' %}filtre={{ filtre }}&{% endif %}page={{ page_obj.next_page_number }}">›</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+(function () {
+
+  /* ── Avatar: palette + initials ── */
+  var PAL = ['#3B82F6','#8B5CF6','#EC4899','#F97316','#14B8A6',
+             '#6366F1','#0EA5E9','#84CC16','#F43F5E','#A855F7'];
+  function strHash(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+    return Math.abs(h);
+  }
+  function mkInitials(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0].toUpperCase(); }).join('');
+  }
+  document.querySelectorAll('.sk-avatar[data-name]').forEach(function (el) {
+    var n = el.dataset.name || '';
+    el.style.background = PAL[strHash(n) % PAL.length];
+    el.textContent = mkInitials(n);
+  });
+
+  /* ── Phone: groups of 2 ── */
+  document.querySelectorAll('.sk-phone[data-raw]').forEach(function (el) {
+    var d = (el.dataset.raw || '').replace(/\D/g, '');
+    el.textContent = d.length === 10 ? d.match(/.{1,2}/g).join(' ') : el.dataset.raw;
+  });
+
+  /* ── Amounts: French thousand separator ── */
+  document.querySelectorAll('.sk-amount[data-v]').forEach(function (el) {
+    var n = parseInt(el.dataset.v, 10);
+    if (!isNaN(n)) el.textContent = n.toLocaleString('fr-FR') + ' XOF';
+  });
+
+  /* ── Relative time ── */
+  function relTime(iso) {
+    var s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60)      return 'à l\'instant';
+    if (s < 3600)    return 'il y a ' + Math.floor(s / 60) + ' min';
+    if (s < 86400)   return 'il y a ' + Math.floor(s / 3600) + ' h';
+    if (s < 2592000) return 'il y a ' + Math.floor(s / 86400) + ' j';
+    return 'il y a ' + Math.floor(s / 2592000) + ' mois';
+  }
+  document.querySelectorAll('.sk-reltime[data-ts]').forEach(function (el) {
+    var prefix = el.closest('.sk-odoo-badge') ? 'Dernière synchro ' : '';
+    el.textContent = prefix + relTime(el.dataset.ts);
+  });
+
+  /* ── Toggle expanded row ── */
+  window.skToggle = function (id) {
+    var row = document.getElementById('sk-exp-' + id);
+    var btn = document.getElementById('sk-chev-' + id);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (btn) btn.classList.toggle('open', !open);
+  };
+
+  /* ── Kebab dropdown ── */
+  window.skKebab = function (btn) {
+    var drop = btn.nextElementSibling;
+    var wasOpen = drop.classList.contains('open');
+    document.querySelectorAll('.sk-drop.open').forEach(function (d) { d.classList.remove('open'); });
+    if (!wasOpen) drop.classList.add('open');
+  };
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.sk-kebab-wrap'))
+      document.querySelectorAll('.sk-drop.open').forEach(function (d) { d.classList.remove('open'); });
+  });
+
+  /* ── Select all ── */
+  var all = document.getElementById('sk-select-all');
+  if (all) {
+    all.addEventListener('change', function () {
+      document.querySelectorAll('.sk-row-cb').forEach(function (cb) { cb.checked = all.checked; });
+    });
+    document.querySelectorAll('.sk-row-cb').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var cbs = document.querySelectorAll('.sk-row-cb');
+        var checked = Array.from(cbs).filter(function (c) { return c.checked; }).length;
+        all.checked = checked === cbs.length;
+        all.indeterminate = checked > 0 && checked < cbs.length;
+      });
+    });
+  }
+
+})();
+</script>
+{% endblock %}

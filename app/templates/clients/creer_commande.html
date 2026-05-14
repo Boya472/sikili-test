@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle commande — Sikili{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:520px; margin:0 auto;">
+
+    <!-- Icon + Title -->
+    <div style="text-align:center; margin-bottom:28px;">
+        <div style="display:inline-flex; align-items:center; justify-content:center; background:#dcfce7; border-radius:50%; width:96px; height:96px; margin-bottom:16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="#22c55e">
+                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.16 14.26c-.12.23-.18.49-.16.74H19v-2H8.42L7.16 14.26zM1 2v2h2l3.6 7.59-1.35 2.44C5.09 14.37 5 14.69 5 15c0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0023.25 5H5.21l-.94-2H1z"/>
+            </svg>
+        </div>
+        <h1 style="margin-bottom:4px;">
+            Nouvelle Commande{% if client %} <span style="color:#22c55e;">— {{ client.nom }}</span>{% endif %}
+        </h1>
+        <p style="color:#9ca3af; font-size:0.875rem;">Remplissez les détails de la commande</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.client.id_for_label }}">Client</label>
+            {{ form.client }}
+            {% if form.client.errors %}
+                <ul class="errorlist">{% for e in form.client.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.nom_produit.id_for_label }}">Produit</label>
+            {{ form.nom_produit }}
+            {% if form.nom_produit.errors %}
+                <ul class="errorlist">{% for e in form.nom_produit.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.quantite.id_for_label }}">Quantité</label>
+            {{ form.quantite }}
+            {% if form.quantite.errors %}
+                <ul class="errorlist">{% for e in form.quantite.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.prix_total.id_for_label }}">Prix total (XOF)</label>
+            {{ form.prix_total }}
+            {% if form.prix_total.errors %}
+                <ul class="errorlist">{% for e in form.prix_total.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:24px;">
+            <button type="submit" class="btn btn-green" style="flex:1; justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Créer la commande
+            </button>
+            <a href="{% url 'liste_clients' %}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
