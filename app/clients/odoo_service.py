@@ -106,7 +106,6 @@ class OdooService:
                 "phone": telephone,
                 "email": email,
                 "customer_rank": 1,
-                "x_sikili_source": "Sikili Web App",
             }])
             logger.info("Odoo — partenaire créé : id=%s, nom=%s", partner_id, nom)
             return partner_id
@@ -125,13 +124,11 @@ class OdooService:
         if not self._uid and not self.authenticate():
             return None
         try:
-            sikili_ref = f"SIKILI-{order_id}" if order_id else "SIKILI"
             xof_currency_id = self._get_currency_id("XOF")
             prix_unitaire = float(prix_total) / quantite
 
             order_data = {
                 "partner_id": odoo_partner_id,
-                "x_sikili_ref": sikili_ref,
                 "order_line": [(0, 0, {
                     "name": nom_produit,
                     "price_unit": prix_unitaire,

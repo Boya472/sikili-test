@@ -38,8 +38,8 @@ docker compose exec app python manage.py migrate
 
 ## Connexion Odoo
 
-- **URL** : http://localhost:8070
-- **Email** : admin@example.com
+- **URL** : https://odoo-18-0-atcc.onrender.com
+- **Login** : admin
 - **Mot de passe** : admin
 
 ---
