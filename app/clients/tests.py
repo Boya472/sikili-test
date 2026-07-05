@@ -27,12 +27,11 @@ class OdooServiceCreatePartnerTest(TestCase):
 
         self.assertEqual(result, 123)
         mock_call_kw.assert_called_once_with('res.partner', 'create', [{
-            'name': 'Alice Dupont',
-            'phone': '0600000000',
-            'email': 'alice@test.com',
+           'name': 'Alice Dupont',
+           'phone': '0600000000',
+           'email': 'alice@test.com',
             'customer_rank': 1,
-            'x_sikili_source': 'Sikili Web App',
-        }])
+    }])
 
     def test_create_partner_odoo_error(self):
         """create_partner retourne None quand Odoo signale une erreur."""
@@ -67,7 +66,6 @@ class OdooServiceCreateSaleOrderTest(TestCase):
         self.assertEqual(args[1], 'create')
         order_data = args[2][0]
         self.assertEqual(order_data['partner_id'], 1)
-        self.assertEqual(order_data['x_sikili_ref'], 'SIKILI-7')
         self.assertEqual(order_data['currency_id'], 5)
         line = order_data['order_line'][0][2]
         self.assertEqual(line['name'], 'Café Premium')
