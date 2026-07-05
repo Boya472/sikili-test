@@ -1,0 +1,39 @@
+name: CI Sikili
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    name: Tests Django
+    runs-on: ubuntu-latest
+
+    env:
+      ODOO_URL: http://localhost:8069
+      ODOO_DB: test_db
+      ODOO_USER: admin
+      ODOO_PASSWORD: admin
+      SECRET_KEY: ci-secret-key-not-used-in-prod
+      DEBUG: "True"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd app
+          pip install -r requirements.txt
+
+      - name: Run Django tests
+        run: |
+          cd app
+          python manage.py test --verbosity=2
